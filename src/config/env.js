@@ -11,8 +11,7 @@ function required(name, fallback) {
 module.exports = {
   port: process.env.PORT || 4000,
   nodeEnv: process.env.NODE_ENV || 'development',
-  clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
-  mongoUri: required('MONGO_URI', 'mongodb://localhost:27017/navy_cashless'),
+  mongoUri: required('MONGO_URI', 'mongodb+srv://mohammedjagda601_db_user:QeBJcvEXMANqojy1@cluster0.j3ylb2d.mongodb.net/?appName=Cluster0'),
   jwt: {
     secret: required('JWT_SECRET', 'dev_only_insecure_secret'),
     expiresIn: process.env.JWT_EXPIRES_IN || '8h',
