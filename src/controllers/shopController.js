@@ -6,17 +6,13 @@ const Transaction = require('../models/Transaction');
 const AuditLog = require('../models/AuditLog');
 
 const createShop = asyncHandler(async (req, res) => {
-  const { name, location, accountHolderName, accountNumber, ifsc } = req.body;
+  const { name, location } = req.body;
   if (!name) {
     res.status(400);
     throw new Error('name is required');
   }
 
-  const shop = await Shop.create({
-    name,
-    location,
-    bankAccountDetails: { accountHolderName, accountNumber, ifsc },
-  });
+  const shop = await Shop.create({ name, location });
 
   await AuditLog.create({ actor: req.user._id, action: 'SHOP_CREATED', meta: { shopId: shop._id, name } });
 

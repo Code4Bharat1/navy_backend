@@ -13,7 +13,6 @@ const purchaseRoutes = require('./routes/purchase.routes');
 const settlementRoutes = require('./routes/settlement.routes');
 const platformRoutes = require('./routes/platform.routes');
 const transactionRoutes = require('./routes/transaction.routes');
-const { razorpayWebhook } = require('./controllers/rechargeController');
 
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
@@ -32,8 +31,8 @@ app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {
-      // No Origin header (curl, server-to-server, the Razorpay webhook) — not a
-      // browser cross-origin request, nothing to check against the allowlist.
+      // No Origin header (curl, server-to-server calls) — not a browser cross-origin
+      // request, nothing to check against the allowlist.
       if (!origin || CLIENT_ORIGINS.includes(origin)) {
         callback(null, true);
       } else {
@@ -43,10 +42,6 @@ app.use(
     credentials: true,
   })
 );
-
-// Registered ahead of the global JSON parser: webhook signature verification needs
-// the exact raw request body, which express.json() would otherwise consume first.
-app.post('/api/recharge/razorpay/webhook', express.raw({ type: 'application/json' }), razorpayWebhook);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
