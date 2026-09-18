@@ -13,7 +13,7 @@ const walletService = require('../services/walletService');
  * one transaction, so a purchase can never partially apply.
  */
 const createPurchase = asyncHandler(async (req, res) => {
-  const { cardUid, amount } = req.body;
+  const { cardUid, amount, idempotencyKey } = req.body;
   const numericAmount = Number(amount);
   if (!cardUid || !numericAmount || numericAmount <= 0) {
     res.status(400);
@@ -23,6 +23,20 @@ const createPurchase = asyncHandler(async (req, res) => {
   if (!req.user.shop) {
     res.status(400);
     throw new Error('This account is not linked to a shop');
+  }
+
+  // The offline queue retries a submission it's not sure landed — if we've already
+  // recorded this exact attempt, hand back the original result instead of charging twice.
+  if (idempotencyKey) {
+    const existing = await Transaction.findOne({ idempotencyKey }).populate('staff', 'name cardUid');
+    if (existing) {
+      return res.status(200).json({
+        transaction: existing,
+        staffName: existing.staff.name,
+        cardUid: existing.staff.cardUid,
+        replay: true,
+      });
+    }
   }
 
   const staff = await User.findOne({ cardUid, role: 'staff' });
@@ -59,6 +73,7 @@ const createPurchase = asyncHandler(async (req, res) => {
             amount: numericAmount,
             type: 'purchase',
             status: 'completed',
+            idempotencyKey: idempotencyKey || undefined,
           },
         ],
         { session }

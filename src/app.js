@@ -10,6 +10,9 @@ const walletRoutes = require('./routes/wallet.routes');
 const rechargeRoutes = require('./routes/recharge.routes');
 const shopRoutes = require('./routes/shop.routes');
 const purchaseRoutes = require('./routes/purchase.routes');
+const settlementRoutes = require('./routes/settlement.routes');
+const platformRoutes = require('./routes/platform.routes');
+const transactionRoutes = require('./routes/transaction.routes');
 const { razorpayWebhook } = require('./controllers/rechargeController');
 
 const { notFound, errorHandler } = require('./middleware/errorHandler');
@@ -35,6 +38,9 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/recharge', rechargeRoutes);
 app.use('/api/shops', shopRoutes);
 app.use('/api/purchase', purchaseRoutes);
+app.use('/api/settlements', settlementRoutes);
+app.use('/api/platform', platformRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

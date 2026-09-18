@@ -22,4 +22,14 @@ module.exports = {
     keySecret: process.env.RAZORPAY_KEY_SECRET || '',
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
   },
+  razorpayx: {
+    keyId: process.env.RAZORPAYX_KEY_ID || '',
+    keySecret: process.env.RAZORPAYX_KEY_SECRET || '',
+    accountNumber: process.env.RAZORPAYX_ACCOUNT_NUMBER || '',
+  },
+  settlement: {
+    // Cron expression for the automatic settlement run. Default: 02:00 every day.
+    cron: process.env.SETTLEMENT_CRON || '0 2 * * *',
+    enabled: process.env.SETTLEMENT_CRON_ENABLED !== 'false',
+  },
 };

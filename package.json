@@ -1,7 +1,7 @@
 {
   "name": "navy-cashless-backend",
   "version": "1.0.0",
-  "description": "Navy Camp Cashless Card Payment Platform - Backend API (Phase 1: Staff & Card Management, Wallet Ledger, Razorpay Recharge)",
+  "description": "Navy Camp Cashless Card Payment Platform - Backend API",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {
@@ -19,8 +19,10 @@
     "express-validator": "^7.1.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.21.0",
     "mongoose": "^8.5.1",
     "morgan": "^1.10.0",
+    "node-cron": "^4.2.1",
     "razorpay": "^2.9.4",
     "uuid": "^11.1.1"
   },
