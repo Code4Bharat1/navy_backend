@@ -19,6 +19,9 @@ function round2(n) {
  * refunded purchases are excluded by construction — only status:'completed' transactions are
  * picked up, and a disputed transaction is moved out of 'completed' the moment it's raised
  * (see transactionController.disputeTransaction), so it simply won't appear here until resolved.
+ * Settlement is manual and admin-triggered (e.g. end of day) rather than on a fixed schedule,
+ * so the admin's own timing is the protection window — there's no separate artificial delay
+ * here holding back same-day sales.
  */
 async function runSettlementForShop(shop, { actorId, cycleEnd = new Date() } = {}) {
   const config = await PlatformConfig.getSingleton();
@@ -26,22 +29,12 @@ async function runSettlementForShop(shop, { actorId, cycleEnd = new Date() } = {
   const lastPaid = await Settlement.findOne({ shop: shop._id, status: 'paid' }).sort({ cycleEnd: -1 });
   const cycleStart = lastPaid ? lastPaid.cycleEnd : shop.createdAt;
 
-  // A transaction only becomes settleable once it's cleared the dispute window — this is
-  // what actually gives "disputed within 48h" its teeth; otherwise a purchase could be
-  // settled and marked paid before the customer even had a chance to dispute it.
-  const disputeWindowMs = config.disputeWindowHours * 60 * 60 * 1000;
-  const safeCycleEnd = new Date(Math.min(cycleEnd.getTime(), Date.now() - disputeWindowMs));
-
-  if (safeCycleEnd <= cycleStart) {
-    return { shopId: shop._id, shopName: shop.name, skipped: true, reason: 'nothing past the dispute window yet' };
-  }
-
   const eligible = await Transaction.find({
     shop: shop._id,
     type: 'purchase',
     status: 'completed',
     settlement: { $exists: false },
-    createdAt: { $gte: cycleStart, $lt: safeCycleEnd },
+    createdAt: { $gte: cycleStart, $lt: cycleEnd },
   });
 
   if (eligible.length === 0) {
@@ -62,7 +55,7 @@ async function runSettlementForShop(shop, { actorId, cycleEnd = new Date() } = {
           {
             shop: shop._id,
             cycleStart,
-            cycleEnd: safeCycleEnd,
+            cycleEnd,
             grossAmount,
             commission,
             netPaid,
