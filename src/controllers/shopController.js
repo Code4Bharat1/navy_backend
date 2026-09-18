@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const Shop = require('../models/Shop');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const Settlement = require('../models/Settlement');
 const AuditLog = require('../models/AuditLog');
 
 const createShop = asyncHandler(async (req, res) => {
@@ -21,14 +22,27 @@ const createShop = asyncHandler(async (req, res) => {
 
 const listShops = asyncHandler(async (req, res) => {
   const shops = await Shop.find().sort({ createdAt: -1 });
+
   const operatorCounts = await User.aggregate([
     { $match: { role: 'shop_operator' } },
     { $group: { _id: '$shop', count: { $sum: 1 } } },
   ]);
   const countByShop = Object.fromEntries(operatorCounts.map((o) => [o._id?.toString(), o.count]));
 
+  // Lifetime total ever settled (paid) per shop — separate from receivableBalance,
+  // which is only what's currently outstanding since the last settlement.
+  const earnedTotals = await Settlement.aggregate([
+    { $match: { status: 'paid' } },
+    { $group: { _id: '$shop', total: { $sum: '$netPaid' } } },
+  ]);
+  const earnedByShop = Object.fromEntries(earnedTotals.map((e) => [e._id.toString(), e.total]));
+
   res.json({
-    shops: shops.map((s) => ({ ...s.toObject(), operatorCount: countByShop[s._id.toString()] || 0 })),
+    shops: shops.map((s) => ({
+      ...s.toObject(),
+      operatorCount: countByShop[s._id.toString()] || 0,
+      totalEarned: earnedByShop[s._id.toString()] || 0,
+    })),
   });
 });
 
@@ -86,10 +100,16 @@ const getMyShopSummary = asyncHandler(async (req, res) => {
 
   const shop = await Shop.findById(req.user.shop);
 
+  const [earnedAgg] = await Settlement.aggregate([
+    { $match: { shop: req.user.shop, status: 'paid' } },
+    { $group: { _id: null, total: { $sum: '$netPaid' } } },
+  ]);
+
   res.json({
     todayTotal: todayAgg?.total || 0,
     todayCount: todayAgg?.count || 0,
     receivableBalance: shop?.receivableBalance || 0,
+    totalEarned: earnedAgg?.total || 0,
   });
 });
 

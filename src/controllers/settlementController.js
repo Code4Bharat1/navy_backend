@@ -1,4 +1,5 @@
 const asyncHandler = require('express-async-handler');
+const Shop = require('../models/Shop');
 const Settlement = require('../models/Settlement');
 const settlementService = require('../services/settlementService');
 
@@ -6,6 +7,18 @@ const settlementService = require('../services/settlementService');
 const runSettlement = asyncHandler(async (req, res) => {
   const results = await settlementService.runSettlementForAllShops({ actorId: req.user._id });
   res.json({ results });
+});
+
+/** Super Admin settles one specific shop's account right now — "Account Settled" for that shop. */
+const runSettlementForOneShop = asyncHandler(async (req, res) => {
+  const shop = await Shop.findById(req.params.shopId);
+  if (!shop) {
+    res.status(404);
+    throw new Error('Shop not found');
+  }
+
+  const result = await settlementService.runSettlementForShop(shop, { actorId: req.user._id });
+  res.json({ result });
 });
 
 const listSettlements = asyncHandler(async (req, res) => {
@@ -19,4 +32,4 @@ const listMySettlements = asyncHandler(async (req, res) => {
   res.json({ settlements });
 });
 
-module.exports = { runSettlement, listSettlements, listMySettlements };
+module.exports = { runSettlement, runSettlementForOneShop, listSettlements, listMySettlements };
