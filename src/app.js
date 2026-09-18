@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const env = require('./config/env');
 
+const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
 const staffRoutes = require('./routes/staff.routes');
 const walletRoutes = require('./routes/wallet.routes');
@@ -47,7 +48,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(env.nodeEnv === 'development' ? 'dev' : 'combined'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+app.use('/api/health', healthRoutes);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/staff', staffRoutes);
